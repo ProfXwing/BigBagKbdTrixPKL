@@ -107,7 +107,6 @@ pkl_Composer( compKey = "" ) {  								; A post-hoc Compose method: Press a key
 			} 	; end if keyArr
 		} 	; end for sections
 	} 	; end for lengths
-;	if getKeyInfo("@co0") && ( getKeyInfo("@co0") != "--" ) { 	; If a "CoDeKey" Compose0 DK is defined...
 	if inArray( CoDeKeys, compKey ) { 							; If this Compose key is a CoDeKey...
 		pkl_DeadKey( "co0" )    								; ...use it whenever a sequence isn't recognized.
 	}

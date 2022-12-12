@@ -9,6 +9,11 @@
 /*
 WIP 	- Timerless EPKL?!? CSGO tried it and it seems to work: Just call keyPressed(HKey) directly without the whole process-then-runKeyPress/Up!
 			- Nope, the dead key routine caused a hard hang together with timerless key press processing.
+WIP 	- New DK routine without Input? To allow Timerless EPKL.
+			- Moved the Input fn to a separate function.
+				- Problem: Using an eD2VK layout, some DKs work but others just release by a `0` instead of the pressed key.
+					- OK:  ãạảᶏ؋αâǎąăåℵ áāȧȩⱥ
+					- Not: Umlaut, Ext_Special (outputs the URL from 0 release), Ext_Cmd, Compose0, Compose1
 TOFIX	- CSGO's problem: We're still not quite out of the woods regarding buffer overflow, it seems.
 			- I can't reproduce it on https://keyboardchecker.com/
 			- He holds a key for 0.5–1.5 s and it sticks. Longer, and it may not stick?
@@ -362,7 +367,7 @@ SetWorkingDir, %A_ScriptDir% 								; Should "ensure consistency" 	; eD WIP: Ca
 StringCaseSense, On 										; All string comparisons are case sensitive (AHK default is Off) 	; eD WIP: But InStr() is still caseless by def.?
 
 setPklInfo( "pklName", "EPiKaL Portable Keyboard Layout" ) 					; EPKL Name
-setPklInfo( "pklVers", "1.4.0" ) 											; EPKL Version
+setPklInfo( "pklVers", "1.4.1π" )    										; EPKL Version
 setPklInfo( "pklComp", "AHK v1.1.27.07" ) 									; Compilation info
 setPklInfo( "pklHome", "https://github.com/DreymaR/BigBagKbdTrixPKL" )  	; URL used to be http://pkl.sourceforge.net/
 setPklInfo( "pklHdrA", ";`r`n;;  " ) 										; A header used when generating EPKL files
@@ -372,8 +377,11 @@ setPklInfo( "pklHdrB", "`r`n"
 
 setPklInfo( "initStart", A_TickCount )  					; eD DEBUG: Time EPKL startup
 ;;  Global variables are now largely replaced by the get/set info framework, and initialized in the init fns
-global HotKeyBuffer := []   								; Keeps track of the buffer of up to ≈30 pressed keys in ###KeyPress() fns in pkl_keypress
-global HotKeyBufUps := []   								; Note: These declarations in the main section are Super-Global (see AHK docs); they don't really need re-declaring
+;/*  	; eD WIP: Timerless EPKL?!?
+global HotKeyBufDn := [] 									; Keeps track of the buffer of up to ≈30 pressed keys in ###KeyPress() fns in pkl_keypress
+global HotKeyBufUp := [] 									; Note: These declarations in the main section are Super-Global (see AHK docs); they don't really need re-declaring
+;*/ 	; eD WIP: Timerless EPKL?!?
+global DeadKeyBufr := [] 									; Keeps track of active EPKL dead keys  	; eD WIP: Timerless EPKL?!?
 ;global UIsel 												; Variable for UI selection (use Control names to see which one) 	; NOTE: Can't use an object variable for UI (yet)
 Gosub setUIGlobals 											; Set the globals needed for the settings UI (is this necessary?)
 arg = %1% 													; Layout from command line parameter, if any
@@ -433,7 +441,7 @@ processKeyPress27:
 processKeyPress28:
 processKeyPress29:
 processKeyPress30:
-	runKeyPress()
+	runKeyDn()
 Return
 
 processKeyUp:
@@ -444,13 +452,13 @@ Return
 keypressDown: 			; *SC###    hotkeys
 	Critical
 	processKeyPress(    SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*'
-;	keyPressed(         SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*'
+;	keyPressed(         SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*' 		; eD WIP: Timerless EPKL?!?
 Return
 
 keypressUp:  			; *SC### UP 						; To avoid timing issues, this is sent with a different stack buffer
 	Critical
 	processKeyUpBuf(    SubStr( A_ThisHotkey, 2, -3 ) ) 	; Remove trailing " UP" as well
-;	Send % "{Blind}{" . getKeyInfo( SubStr( A_ThisHotkey, 2, -3 ) . "ent1" ) . "  UP}"
+;	Send % "{Blind}{" . getKeyInfo( SubStr( A_ThisHotkey, 2, -3 ) . "ent1" ) . "  UP}"  		; eD WIP: Timerless EPKL?!?
 Return
 
 modifierDown: 			; *SC###    (call fn as HKey to translate to modifier name)
