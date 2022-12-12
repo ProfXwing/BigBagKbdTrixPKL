@@ -377,10 +377,10 @@ setPklInfo( "pklHdrB", "`r`n"
 
 setPklInfo( "initStart", A_TickCount )  					; eD DEBUG: Time EPKL startup
 ;;  Global variables are now largely replaced by the get/set info framework, and initialized in the init fns
-;/*  	; eD WIP: Timerless EPKL?!?
+/*  	; eD WIP: Timerless EPKL?!?
 global HotKeyBufDn := [] 									; Keeps track of the buffer of up to ≈30 pressed keys in ###KeyPress() fns in pkl_keypress
 global HotKeyBufUp := [] 									; Note: These declarations in the main section are Super-Global (see AHK docs); they don't really need re-declaring
-;*/ 	; eD WIP: Timerless EPKL?!?
+*/ 	; eD WIP: Timerless EPKL?!?
 global DeadKeyBufr := [] 									; Keeps track of active EPKL dead keys  	; eD WIP: Timerless EPKL?!?
 ;global UIsel 												; Variable for UI selection (use Control names to see which one) 	; NOTE: Can't use an object variable for UI (yet)
 Gosub setUIGlobals 											; Set the globals needed for the settings UI (is this necessary?)
@@ -409,7 +409,7 @@ Return  													; end of main
 ;LControl & RAlt::Send {RAlt Down} 	; This alone gets AltGr stuck
 ;LControl Up & RAlt Up::Send {RAlt Up} 	; This doesn't work!?
 
-;/*  	; eD WIP: Timerless EPKL?!?
+/*  	; eD WIP: Timerless EPKL?!?
 processKeyPress0:
 processKeyPress1:
 processKeyPress2:
@@ -447,18 +447,18 @@ Return
 processKeyUp:
 	runKeyUp()
 Return
-;*/  	; eD WIP: Timerless EPKL?!?
+*/  	; eD WIP: Timerless EPKL?!?
 
 keypressDown: 			; *SC###    hotkeys
 	Critical
-	processKeyPress(    SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*'
-;	keyPressed(         SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*' 		; eD WIP: Timerless EPKL?!?
+	; processKeyPress(    SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*'
+	keyPressed(         SubStr( A_ThisHotkey, 2     ) ) 	; SubStr removes leading '*' 		; eD WIP: Timerless EPKL?!?
 Return
 
 keypressUp:  			; *SC### UP 						; To avoid timing issues, this is sent with a different stack buffer
 	Critical
-	processKeyUpBuf(    SubStr( A_ThisHotkey, 2, -3 ) ) 	; Remove trailing " UP" as well
-;	Send % "{Blind}{" . getKeyInfo( SubStr( A_ThisHotkey, 2, -3 ) . "ent1" ) . "  UP}"  		; eD WIP: Timerless EPKL?!?
+	; processKeyUpBuf(    SubStr( A_ThisHotkey, 2, -3 ) ) 	; Remove trailing " UP" as well
+	Send % "{Blind}{" . getKeyInfo( SubStr( A_ThisHotkey, 2, -3 ) . "ent1" ) . "  UP}"  		; eD WIP: Timerless EPKL?!?
 Return
 
 modifierDown: 			; *SC###    (call fn as HKey to translate to modifier name)

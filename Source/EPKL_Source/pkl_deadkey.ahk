@@ -61,6 +61,10 @@ pkl_DeadKey( dkCode ) { 									; Handle DK presses. Dead key names are given a
 	
 	setKeyInfo( "CurrNumOfDKs", ++CurrNumOfDKs ) 			; Increase the # of registered DKs, both as variable and KeyInfo
 	setKeyInfo( "CurrNameOfDK", DK )
+
+    ; Exit dead key moved to keyPressed()
+    ; Actual DK function separated to runDeadKey() - CSGO
+
 ;	pklDebug( "DK: " DK "`nNumOfDKs: " CurrNumOfDKs "`nBaseKey: " CurrBaseKey " / " getKeyInfo( "CurrBaseKey" ), 1.3 ) 	; eD DEBUG
 	
 ;	if ( CurrNumOfDKs == 0 ) { 								; eD WIP: When is this triggered? And Why? CurrNum gets increased above!?
@@ -68,7 +72,7 @@ pkl_DeadKey( dkCode ) { 									; Handle DK presses. Dead key names are given a
 ;		Return
 ;	}
 	
-;	/*  	; eD WIP: Testing new Input method for DKs
+	/*  	; eD WIP: Testing new Input method for DKs
 	endDKs  := "{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}"
 			.  "{Left}{Right}{Up}{Down}{BS}{Esc}"
 			.  "{Home}{End}{PgUp}{PgDn}{Del}{Ins}"  		; eD WIP: These keys don't work for canceling a DK? Why? Their Ext counterparts work fine.
@@ -78,7 +82,7 @@ pkl_DeadKey( dkCode ) { 									; Handle DK presses. Dead key names are given a
 		resetDeadKeys() 									; A DK-ending input cancels all existing DKs
 		Return % "€ɳđḲëý"
 	}
-;	*/  	; eD WIP
+	  	; eD WIP
 ;	if ( inKey := inputDK() == "€ɳđḲëý" )   				; eD WIP: Make a new method for release key input that works with Timerless EPKL?!?
 ;		Return
 	CurrBaseKey     := getKeyInfo( "CurrBaseKey"  ) 		; Current base/release key, set by pkl_CheckForDKs() via pkl_Send() 	; eD WIP: This gets nulled somehow?!?
@@ -91,6 +95,57 @@ pkl_DeadKey( dkCode ) { 									; Handle DK presses. Dead key names are given a
 	
 	setKeyInfo( "CurrNumOfDKs", --CurrNumOfDKs ) 			; Pop one DK from the queue. Note: ++ and -- have the Input between them.
 	setKeyInfo( "CurrBaseKey" , 0 )
+	dkEnt   := DeadKeyValue( DK, relChr )   				; Get the DK value/entry for this base key
+	
+	if ( dkEnt && (dkEnt + 0) == "" ) { 					; Entry is a special string, like {Home}+{End} or prefix-entry
+		psp := pkl_ParseSend( dkEnt )
+		if ( not psp )  				 					; If not a recognized prefix-entry...
+			SendInput {Text}%dkEnt% 						; ...just send the entry as text by default.
+;		if ( PDKVs && psp != "@" ) { 						; eD WIP: Allow chained DKs too! This means not erasing the DK queue.
+;		}
+		resetDeadKeys()
+	} else if ( dkEnt && PDKVs == "" ) {
+		pkl_Send( dkEnt )									; Send the normal single-character final entry
+	} else {
+		if ( getKeyInfo( "CurrNumOfDKs" ) == 0 ) {			; No more active dead keys, so release...
+			pkl_Send( DeadKeyChar ) 						; ...this DKs base char, then...
+			if ( PDKVs ) {
+				StringTrimRight, PDKVs, PDKVs, 1
+				Loop, Parse, PDKVs, %A_Space%
+				{
+					pkl_Send( A_LoopField )					; ...send all chars in DK queue and delete it.
+				}
+			}
+			resetDeadKeys()
+		} else {
+			PDKVs := DeadKeyChar  . " " . PDKVs 			; Add DK base char to space separated DK queue
+			setKeyInfo( "PressedDKVs", PDKVs )  			; eD WIP: Try to clear up the DK code? Unsure what it does...
+		} 	; end if CurrNumOfDKs
+		pkl_Send( relChr )  								; Send the release key's char
+	} 	; end if dkEnt
+    */
+}
+
+runDeadKey(CurrBaseKey) {                                   ; Moved to its own function. Run this after next direct keypress. - CSGO
+    CurrNumOfDKs    := getKeyInfo( "CurrNumOfDKs" ) 		; Current # of dead keys active. 	; eD ONHOLD: Revert to global? No, because it's used in many files?
+	DK    := getKeyInfo( "CurrNameOfDK" ) 		; Current dead key's name
+	PDKVs           := getKeyInfo( "PressedDKVs"  ) 		; Used to be the static PVDK ("Pressed Dead Key Values queue"?)
+	DeadKeyChar     := DeadKeyValue( DK, "base1" )  		; Base release char for this DK, named "base1" in the DK's table.
+	DeadKeyChr1     := DeadKeyValue( DK, "base2" )  		; Alternative release char, if defined
+	DeadKeyChr1     := ( DeadKeyChr1 ) ? DeadKeyChr1 : DeadKeyChar
+    
+    if ( CurrBaseKey != 0 ) { 								; If a BaseKey is set, use that, otherwise use the inKey input directly
+		relChr  := CurrBaseKey
+;		inKey   := Chr( relChr ) 							; The chr symbol for the current base key (e.g., 65 = A) 				; eD WIP: This isn't used – is it?!?
+	} else {
+		relChr  := Ord( inKey ) 							; The ASCII/Unicode ordinal number for the pressed key; was Asc()
+	} 	; end if CurrBaseKey
+	
+	setKeyInfo( "CurrNumOfDKs", --CurrNumOfDKs ) 			; Pop one DK from the queue. Note: ++ and -- have the Input between them.
+	setKeyInfo( "CurrBaseKey" , 0 )
+
+    pklTooltip("DK: " . DK . " \ relChr: " . relChr)
+
 	dkEnt   := DeadKeyValue( DK, relChr )   				; Get the DK value/entry for this base key
 	
 	if ( dkEnt && (dkEnt + 0) == "" ) { 					; Entry is a special string, like {Home}+{End} or prefix-entry

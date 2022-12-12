@@ -114,6 +114,7 @@ pkl_Composer( compKey = "" ) {  								; A post-hoc Compose method: Press a key
 }
 
 pkl_CheckForDKs( ch ) {
+    /*  ; removed for timerless epkl - csgo
 	static SpaceWasSentForSystemDKs := false
 	
 	if ( getKeyInfo( "CurrNumOfDKs" ) == 0 ) {  				; No active DKs 	; eD WIP: Hang on... Are we talking about system or EPKL DKs here?!?
@@ -125,6 +126,13 @@ pkl_CheckForDKs( ch ) {
 		SpaceWasSentForSystemDKs := true
 	}
 	Return SpaceWasSentForSystemDKs
+    */
+
+    
+    if (getKeyInfo("CurrNumOfDKs") != 0 ) {                     ; runs the dead key function directly, not sure if this is how i should do this - csgo
+        runDeadKey(ch)
+        Return true
+    }
 }
 
 pkl_ParseSend( entry, mode = "Input" ) { 						; Parse & Send Keypress/Extend/DKs/Strings w/ prefix
